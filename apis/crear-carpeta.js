@@ -79,7 +79,6 @@ btnObtener.addEventListener('click', (e) => {
         method: 'GET',
         headers: headers,
         redirect: 'follow'
-
     };
 
     fetch(`http://127.0.0.1/alfresco/api/-default-/public/alfresco/versions/1/nodes/${idNodoObtener}`, requestOptions)
@@ -136,7 +135,7 @@ const mostrarInfoNodos = ({ list }) => {
                 <td>${entry.isFolder}</td>
                 <td>${entry.isFile}</td>
                 <td>${entry.parentId}</td>
-                <td><button type="submit" id="${entry.id}" class="btn btn-success" onclick="descargarArchivo(event)">
+                <td><button type="button" id="${entry.id}" name="${entry.id}" class="btn btn-outline-primary" onclick="descargarArchivo(event)">
                     Descargar
                 </button>
                 </td>
@@ -148,94 +147,3 @@ const mostrarInfoNodos = ({ list }) => {
 }
 
 
-
-
-
-//   =================================================
-//          PASO 3-DESCARGA DEL ARCHIVO BLOB
-//   =================================================
-const downloadBlob = async (blob, name = "htc-default.zip") => {
-    // Convert your blob into a Blob URL (a special url that points to an object in the browser's memory)
-    const blobUrl = URL.createObjectURL(blob);
-    console.log("BLOBURL: ", blobUrl)
-    // Create a link element
-    const link = document.createElement("a");
-
-    // Set link's href to point to the Blob URL
-    link.href = blobUrl;
-    link.download = name;
-
-    // Append link to the body
-    document.querySelector("#img-aqui").appendChild(link);
-
-    // Dispatch click event on the link
-    // This is necessary as link.click() does not work on the latest firefox
-    link.dispatchEvent(
-        new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            view: window
-        })
-    );
-
-    // Remove link from body
-    document.querySelector("#img-aqui").removeChild(link);
-}
-
-
-//   ==============================================
-//         PASO 2 - OBTENER ARCHIVO ZIP (GET)
-//   ==============================================
-const obtenerArchivoBlobZip = async (id) => {
-    let myHeaders = new Headers();
-    myHeaders.append("Authorization", "Basic YWRtaW46MTIzNDU=");
-    myHeaders.append("Content-Type", "application/json")
-
-    
-    let requestOptions = {
-        method: 'GET',
-        headers: myHeaders,
-        redirect: 'follow'
-    };
-
-    const data = await fetch(`http://127.0.0.1/alfresco/api/-default-/public/alfresco/versions/1/nodes/${id}/content`, requestOptions)
-    const blob = data.blob();
-    return blob;
-
-}
-
-
-//   ==============================================
-//        PASO 1 - GENERACIÓN ID DEL ZIP (POST)
-//   ==============================================
-const obtenerIdZip = async (id) => {
-    let myHeaders = new Headers();
-    myHeaders.append("Authorization", "Basic YWRtaW46MTIzNDU=");
-    myHeaders.append("Content-Type", "application/json")
-    let requestOptions = {
-        method: 'POST',
-        body: JSON.stringify({ "nodeIds": [id] }),
-        headers: myHeaders,
-        redirect: 'follow'
-    };
-
-    const data = await fetch(`http://localhost:80/alfresco/api/-default-/public/alfresco/versions/1/downloads`, requestOptions)
-    const { entry } = await data.json()
-    const idZip = entry.id;
-    return idZip;
-
-}
-
-
-const descargarArchivo = async (e) => {
-    e.preventDefault();
-
-    // id obtenido al hacer click en el botón descargar
-    const { id } = e.target;
-
-    const idZip = await obtenerIdZip(id);
-    const blob = await obtenerArchivoBlobZip(idZip);
-    await downloadBlob(blob, "htc-archivo.zip")
-
-
-};
